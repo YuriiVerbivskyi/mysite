@@ -51,3 +51,41 @@ class Register(APIView):
 
 def user_profile(request):
     return HttpResponse("User profile endpoint")
+
+def get_last_transs():
+        headers = {
+            "accept": "application/json",
+            "x-token": "usqbA76ff6U0Fi6Z_QL3t2Xmh42lYCOUQ9h9v2PW51nM"
+        }
+        account_id = "WEzuUgHoGQVlmHaHagiU0w" 
+        start = 1759622400
+        end = 1762214400
+        url = f"https://api.monobank.ua/personal/statement/{account_id}/{start}/{end}"
+        r = requests.get(url, headers=headers)
+        ans = r.json()
+        last_transs = []
+        try:
+            for i in ans:
+                last_transs.append({i["description"]: i["amount"]})
+            return last_transs
+        except Exception as e:
+            return e
+
+class MonoData(APIView):
+    def get(self, requests, data):
+        if data == "trans":
+            print("gettting last transs..")
+            last_trns = get_last_transs()
+            print(last_trns)
+
+
+        elif data == "balance":
+            print("current balance")
+        else:
+            print("doesn't exist")
+            return redirect("/")
+
+        return JsonResponse({"status": "ok"})
+
+
+
