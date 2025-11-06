@@ -55,9 +55,9 @@ def user_profile(request):
 def get_last_transs():
         headers = {
             "accept": "application/json",
-            "x-token": "usqbA76ff6U0Fi6Z_QL3t2Xmh42lYCOUQ9h9v2PW51nM"
+            "x-token": ""
         }
-        account_id = "WEzuUgHoGQVlmHaHagiU0w" 
+        account_id = "" 
         start = 1759622400
         end = 1762214400
         url = f"https://api.monobank.ua/personal/statement/{account_id}/{start}/{end}"
