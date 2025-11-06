@@ -13,4 +13,5 @@ urlpatterns = [
     path('token/verify/', TokenVerifyView.as_view(), name='verify'),
     path('register/', views.register_user, name='register'),
     path('profile/', views.user_profile, name='user_profile'),
+    path('monoinfo/<str:data>/', views.MonoData.as_view(), name='mono_data'),
 ]
