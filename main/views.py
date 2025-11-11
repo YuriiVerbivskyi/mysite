@@ -114,17 +114,14 @@ class Register(APIView):
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            user = serializer.save()
-            return Response(
-                {"message": "Success registration", "user_id": user.id},
-                status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_profile(request):
-    return HttpResponse("User profile endpoint")
+    return Response({
+        "username": request.user.username,
+        "email": request.user.email,
+        "role": getattr(request.user, 'role', 'student')
+    })
 
 
 def login_page(request):
@@ -147,8 +144,3 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response({
-        "username": request.user.username,
-        "email": request.user.email,
-        "role": getattr(request.user, 'role', 'student')
-    })
