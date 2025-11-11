@@ -6,6 +6,7 @@ from . import views
 from rest_framework import permissions
 
 
+
 schema_view = get_schema_view(
     openapi.Info(
         title="E-Queue API",
