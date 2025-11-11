@@ -1,7 +1,7 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from main.models import CustomUser
-from django.core.exceptions import ValidationError
+from main.models import CustomUser, Queue, QueueEntry, Notification
+
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
@@ -16,21 +16,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def validate_password(self, password):
-        try:
-            validate_password(password)
-        except ValidationError as error:
-            raise serializers.ValidationError(list(error.messages))
+        validate_password(password)
         return password
 
-    def validate(self, passwords):
-        if passwords['password'] != passwords['password2']:
-            raise serializers.ValidationError({"password2": "Passwords don`t match"})
-
-        return passwords
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password2": "Passwords don't match"})
+        return attrs
 
     def create(self, validated_data):
         validated_data.pop('password2')
-
         user = CustomUser.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -40,8 +35,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class QueueSerializer(serializers.ModelSerializer):
-    pass
+    class Meta:
+        model = Queue
+        fields = '__all__'
+        read_only_fields = ('created_by', 'created_at')
 
 
 class QueueEntrySerializer(serializers.ModelSerializer):
-    pass
+    class Meta:
+        model = QueueEntry
+        fields = '__all__'
+        read_only_fields = ('user', 'created_at')
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ('id', 'notification_type', 'subject', 'message', 'is_read', 'created_at')
+        read_only_fields = ('created_at',)

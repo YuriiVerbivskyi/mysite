@@ -4,15 +4,19 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from django.shortcuts import render
-from .serializers import CustomUserSerializer, QueueSerializer, QueueEntrySerializer
+from .serializers import CustomUserSerializer, QueueSerializer, QueueEntrySerializer, NotificationSerializer
 from .permissions import IsQueueOwnerOrAdmin, IsAuthenticatedOrReadOnly
-from .models import Queue, QueueEntry
+from .models import Queue, QueueEntry, Notification, CustomUser
+from .utils import send_notification_email
+
 
 def register_user(request):
     return render(request, 'register.html')
 
+
 def home(request):
     return render(request, 'index.html')
+
 
 class QueueListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -28,6 +32,7 @@ class QueueListView(APIView):
             serializer.save(created_by=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class QueueDetailView(APIView):
     permission_classes = [IsQueueOwnerOrAdmin]
@@ -55,6 +60,7 @@ class QueueDetailView(APIView):
         queue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class QueueEntryListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -66,9 +72,28 @@ class QueueEntryListView(APIView):
     def post(self, request):
         serializer = QueueEntrySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            entry = serializer.save(user=request.user)
+            position = QueueEntry.objects.filter(queue=entry.queue).count()
+            entry.position = position
+            entry.save()
+
+            try:
+                if position == 1:
+                    subject = "Ти наступний до здачі завдання!"
+                    message = f"Вітаю {request.user.first_name or request.user.username}!\n\n{entry.queue.name}\n\nБудь готовим, орієнтовний час 2-3хв\n\nНомер: {position}"
+                    notification_type = 'ready'
+                else:
+                    subject = "Запис у чергу успішний"
+                    message = f"Вітаю {request.user.first_name or request.user.username}!\n\nТи записався(лась) у чергу: {entry.queue.name}\n\nТвій номер у черзі: {position}\n\nОчікуй свою чергу."
+                    notification_type = 'queue_joined'
+
+                send_notification_email(request.user, subject, message, notification_type)
+            except Exception as e:
+                print(f"Помилка відправки email при записі в чергу: {e}")
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class QueueEntryDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -94,6 +119,28 @@ class QueueEntryDetailView(APIView):
         entry.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class NotificationListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notifications = Notification.objects.filter(user=request.user)
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_notification_as_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+        return Response({'status': 'marked as read'}, status=status.HTTP_200_OK)
+    except Notification.DoesNotExist:
+        return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class Register(APIView):
     permission_classes = [AllowAny]
 
@@ -101,11 +148,22 @@ class Register(APIView):
         serializer = CustomUserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            try:
+                send_notification_email(
+                    user,
+                    "Реєстрація успішна",
+                    f"Вітаю {user.first_name or user.username}!\n\nWelcome to E-Queue!\n\nТвій аккаунт успішно створений.\n\nКористувач: {user.username}\nПошта: {user.email}",
+                    'registration'
+                )
+            except Exception as e:
+                print(f"Помилка відправки email при реєстрації: {e}")
+
             return Response(
                 {"message": "Success registration", "user_id": user.id},
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

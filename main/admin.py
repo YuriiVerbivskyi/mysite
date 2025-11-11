@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import CustomUser, Queue, QueueEntry, Notification
 
-# Register your models here.
+admin.site.register(CustomUser)
+admin.site.register(Queue)
+admin.site.register(QueueEntry)
+admin.site.register(Notification)
