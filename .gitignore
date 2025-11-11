@@ -1,4 +1,5 @@
-__pycache__/
+.env
+__pygit reflog expire --expire=now --all && git gc --prune=now --aggressivecache__/
 *.pyc
 *.pyo
 *.pyd
