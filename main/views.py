@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,8 +12,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from django.shortcuts import render
 from .serializers import CustomUserSerializer, QueueSerializer, QueueEntrySerializer
-from .permissions import IsQueueOwnerOrAdmin, IsAuthenticatedOrReadOnly
+from .permissions import IsQueueOwnerOrAdmin, IsAuthenticatedOrReadOnly, IsTeacherOrAdmin
 from .models import Queue, QueueEntry
+import uuid
+import json
 
 
 
@@ -114,11 +116,11 @@ class Register(APIView):
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            user = serializer.save()
-            return Response(
-                {"message": "Success registration", "user_id": user.id},
-                status=status.HTTP_201_CREATED
-            )
+        user = serializer.save()
+        return Response(
+            {"message": "Success registration", "user_id": user.id},
+            status=status.HTTP_201_CREATED
+        )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -147,8 +149,109 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response({
-        "username": request.user.username,
-        "email": request.user.email,
-        "role": getattr(request.user, 'role', 'student')
-    })
+        return Response({
+            "username": request.user.username,
+            "email": request.user.email,
+            "role": getattr(request.user, 'role', 'student')
+        })
+
+def get_last_transs():
+        headers = {
+            "accept": "application/json",
+            "x-token": "usqbA76ff6U0Fi6Z_QL3t2Xmh42lYCOUQ9h9v2PW51nM"
+        }
+        account_id = "WEzuUgHoGQVlmHaHagiU0w" 
+        start = 1759622400
+        end = 1762214400
+        url = f"https://api.monobank.ua/personal/statement/{account_id}/{start}/{end}"
+        r = requests.get(url, headers=headers)
+        ans = r.json()
+        last_transs = []
+        try:
+            for i in ans:
+                last_transs.append({i["description"]: i["amount"]})
+            return last_transs
+        except Exception as e:
+            return e
+
+class MonoData(APIView):
+    def get(self, requests, data):
+        if data == "trans":
+            print("gettting last transs..")
+            last_trns = get_last_transs()
+            print(last_trns)
+
+
+        elif data == "balance":
+            print("current balance")
+        else:
+            print("doesn't exist")
+            return redirect("/")
+
+        return JsonResponse({"status": "ok"})
+
+def get_last_transs():
+        headers = {
+            "accept": "application/json",
+            "x-token": "usqbA76ff6U0Fi6Z_QL3t2Xmh42lYCOUQ9h9v2PW51nM"
+        }
+        account_id = "WEzuUgHoGQVlmHaHagiU0w" 
+        start = 1759622400
+        end = 1762214400
+        url = f"https://api.monobank.ua/personal/statement/{account_id}/{start}/{end}"
+        r = requests.get(url, headers=headers)
+        ans = r.json()
+        last_transs = []
+        try:
+            for i in ans:
+                last_transs.append({i["description"]: i["amount"]})
+            return last_transs
+        except Exception as e:
+            return e
+
+class MonoData(APIView):
+    def get(self, requests, data):
+        if data == "trans":
+            print("gettting last transs..")
+            last_trns = get_last_transs()
+            print(last_trns)
+
+
+        elif data == "balance":
+            print("current balance")
+        else:
+            print("doesn't exist")
+            return redirect("/")
+
+        return JsonResponse({"status": "ok"})
+
+def queue(request):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    current = "admin"
+
+    if current == "admin":
+        ck = uuid.uuid4().hex
+        cntxt = {
+            "status": current,
+            "auth": ck,
+        }
+    else:
+        cntxt = {
+            "status": current
+        }
+
+    return render(request, "queues.html", cntxt)
+
+all_students = ['efere', "wfdscvdscds", "wfvvdscs", "edfvdfvijn"]
+
+def next_student(request):
+    if request.method == 'POST':
+        body = json.loads(request.body)
+
+        
+        # for i in some_list:
+        #     if i == body.get("ck"):
+                current = all_students.pop(0)
+                return JsonResponse({'ok': current}, status=200)
+            else:
+                return JsonResponse({'ok': "False"}, status=400)
