@@ -1,21 +1,14 @@
 from django.http import HttpResponse
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .serializers import CustomUserSerializer, LoginSerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from django.shortcuts import render
-from .serializers import CustomUserSerializer, QueueSerializer, QueueEntrySerializer
+from rest_framework.decorators import api_view, permission_classes
+from .serializers import CustomUserSerializer, LoginSerializer, QueueSerializer, QueueEntrySerializer
 from .permissions import IsQueueOwnerOrAdmin, IsAuthenticatedOrReadOnly
 from .models import Queue, QueueEntry
-
-
 
 def register_user(request):
     return render(request, 'register.html')
@@ -103,17 +96,12 @@ class QueueEntryDetailView(APIView):
         entry.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class Register(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = CustomUserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
             user = serializer.save()
             return Response(
                 {"message": "Success registration", "user_id": user.id},
@@ -126,10 +114,8 @@ class Register(APIView):
 def user_profile(request):
     return HttpResponse("User profile endpoint")
 
-
 def login_page(request):
     return render(request, 'login.html')
-
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -140,15 +126,8 @@ class LoginView(APIView):
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
             access_token = refresh.access_token
-
             return Response({
                 'access_token': str(access_token),
                 'refresh_token': str(refresh),
             }, status=status.HTTP_200_OK)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response({
-        "username": request.user.username,
-        "email": request.user.email,
-        "role": getattr(request.user, 'role', 'student')
-    })
