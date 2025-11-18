@@ -26,6 +26,7 @@ urlpatterns = [
     path('token/verify/', TokenVerifyView.as_view(), name='verify'),
     path('register/', views.Register.as_view(), name='register_api'),
     path('login/', views.LoginView.as_view(), name='login_api'),
+    path('profile/', views.user_profile, name='user_profile_api'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
