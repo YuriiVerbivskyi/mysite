@@ -229,6 +229,7 @@ def queue(request):
     permission_classes = [IsAuthenticatedOrReadOnly]
     current = "admin"
 
+
     if current == "admin":
         ck = uuid.uuid4().hex
         cntxt = {
@@ -247,10 +248,8 @@ all_students = ['efere', "wfdscvdscds", "wfvvdscs", "edfvdfvijn"]
 def next_student(request):
     if request.method == 'POST':
         body = json.loads(request.body)
-
-        
-        # for i in some_list:
-        #     if i == body.get("ck"):
+        for i in some_list:
+            if i == body.get("ck"):
                 current = all_students.pop(0)
                 return JsonResponse({'ok': current}, status=200)
             else:
