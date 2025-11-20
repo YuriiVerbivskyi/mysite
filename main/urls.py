@@ -3,8 +3,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
 
 urlpatterns = [
-    path('queues/', views.QueueListView.as_view(), name='queues'),
-    path('queues/<int:pk>/', views.QueueDetailView.as_view(), name='queue_detail'),
+    path('queue/', views.QueueListView.as_view(), name='queue'),
+    path('queue/<int:pk>/', views.QueueDetailView.as_view(), name='queue_detail'),
     path('entries/', views.QueueEntryListView.as_view(), name='queue_entries'),
     path('entries/<int:pk>/', views.QueueEntryDetailView.as_view(), name='queue_entry_detail'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

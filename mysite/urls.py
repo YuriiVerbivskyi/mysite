@@ -10,6 +10,7 @@ urlpatterns = [
     path('profile/', main_views.user_profile, name='user_profile'),
     path('login/', main_views.login_page, name='login_page'),
     path('admin/', admin.site.urls),
+    path('queue/', main_views.queue, name='queue'),
     path('api/', include('main.urls')),
 ]
 
